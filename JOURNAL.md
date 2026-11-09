@@ -21,3 +21,19 @@ The PostgreSQL check in `api/routes/health.py` sends a plain `SELECT 1` string t
 **Baseline observation:** PostgreSQL responds to `SELECT 1` directly, but `GET /health` returns HTTP 503 and reports PostgreSQL as unhealthy. The API log shows that SQLAlchemy rejected the raw SQL string.
 
 **Cohort ledger:** Pending claim and ledger entry.
+
+## Unit 8 — Reproduction & solution planning
+
+### Reproduction steps for #61
+
+With the Compose services running and the app started with `make run`, run these commands from the repository root in a second terminal.
+
+```sh
+docker compose ps
+docker compose exec -T db psql -U pathreview -d pathreview_dev -tAc 'SELECT 1'
+curl -sS -i http://localhost:8000/health
+```
+
+PostgreSQL, Redis, and Chroma showed healthy in Compose, and the direct PostgreSQL query returned `1`. Three requests to `/health` each returned HTTP 503 with `detail.dependencies.postgres` set to `unhealthy`. The API log recorded `postgres_health_check_failed` and said the SQL string must be wrapped with `text()`.
+
+As a control, I ran both forms using the app's `AsyncSessionLocal` on SQLAlchemy 2.1.8. `await session.execute("SELECT 1")` raised `ArgumentError`, while `await session.execute(text("SELECT 1"))` in a fresh session returned `1`. The response also reported Redis as unhealthy. The Redis log identified the missing `settings.redis_host` from [issue #62](https://github.com/codepath/pathreview-ai201-fa26-howard/issues/62).
