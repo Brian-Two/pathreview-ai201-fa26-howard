@@ -24,6 +24,18 @@ The PostgreSQL check in `api/routes/health.py` sends a plain `SELECT 1` string t
 
 ## Unit 8 — Reproduction & solution planning
 
+**Reproduction commit link:** [`4a5b87f`](https://github.com/Brian-Two/pathreview-ai201-fa26-howard/commit/4a5b87fbc186111edf29714eaf630393c28b9b11)
+
+**Reproduction summary:**
+The direct PostgreSQL probe returned `1`, but three calls to `GET /health` reported PostgreSQL as unhealthy. The API log showed that SQLAlchemy rejected the raw query, and the same query wrapped in `text()` worked through the app's async session.
+
+**PLAN.md link:** [Solution plan](https://github.com/Brian-Two/pathreview-ai201-fa26-howard/blob/fix/61-health-check-db-probe/PLAN.md)
+
+**Walkthrough video (recommended):** Deferred.
+
+**Blockers or open questions:**
+During Unit 9 validation, check the PostgreSQL field even if the overall response is still HTTP 503 due to #62. Review the route's mypy overrides once the regression tests pass.
+
 ### Reproduction steps for #61
 
 With the Compose services running and the app started with `make run`, run these commands from the repository root in a second terminal.
