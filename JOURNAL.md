@@ -49,3 +49,16 @@ curl -sS -i http://localhost:8000/health
 PostgreSQL, Redis, and Chroma showed healthy in Compose, and the direct PostgreSQL query returned `1`. Three requests to `/health` each returned HTTP 503 with `detail.dependencies.postgres` set to `unhealthy`. The API log recorded `postgres_health_check_failed` and said the SQL string must be wrapped with `text()`.
 
 As a control, I ran both forms using the app's `AsyncSessionLocal` on SQLAlchemy 2.1.8. `await session.execute("SELECT 1")` raised `ArgumentError`, while `await session.execute(text("SELECT 1"))` in a fresh session returned `1`. The response also reported Redis as unhealthy. The Redis log identified the missing `settings.redis_host` from [issue #62](https://github.com/codepath/pathreview-ai201-fa26-howard/issues/62).
+
+## Unit 9 — Solution building & PR submission
+
+### Check-in 1 (mid-week) — November 18, 2026
+
+**Current progress:**
+Reviewed the Unit 8 plan and contribution standards. Added three route regression tests in `tests/unit/test_health.py`: all dependencies healthy, PostgreSQL execution failure, and Redis failure with PostgreSQL still healthy. The success double rejects a raw SQL string so it cannot silently accept the seeded bug. The implementation is still unchanged at this check-in.
+
+**Next steps:**
+Confirm the regression tests fail on the original route, wrap the database query in `sqlalchemy.text()`, run the full checks and a live PostgreSQL probe, then open the PR and record its link here before submitting the working branch URL.
+
+**Blockers:**
+The existing virtual environment has cloud-offloaded files that stall imports. A fresh development environment is being installed for verification. Peer or mentor feedback has not been received.
