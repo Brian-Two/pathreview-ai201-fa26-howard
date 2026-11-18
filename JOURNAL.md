@@ -62,3 +62,31 @@ Confirm the regression tests fail on the original route, wrap the database query
 
 **Blockers:**
 The existing virtual environment has cloud-offloaded files that stall imports. A fresh development environment is being installed for verification. Peer or mentor feedback has not been received.
+
+---
+
+### Check-in 2 (submission) — November 18, 2026
+
+**PR link:** [codepath/pathreview-ai201-fa26-howard#99](https://github.com/codepath/pathreview-ai201-fa26-howard/pull/99)
+
+**Branch:** `fix/61-health-check-db-probe`
+
+**What you built:**
+Changed the PostgreSQL health probe to execute `text("SELECT 1")`, which SQLAlchemy 2.x accepts. The handler preserves its response shape and still returns HTTP 503 for dependency failures. The separate Redis configuration defect (#62) is outside this fix.
+
+**Tests added or updated:**
+Added `tests/unit/test_health.py` with three HTTP route tests: all dependencies healthy, database query failure, and Redis failure with PostgreSQL healthy. The strict session double rejects a raw SQL string. Before the fix, two tests failed and one passed; after the fix all three pass.
+
+**Self-review confirmation:**
+- [x] `make check` passes (Ruff, Black, mypy; 76 source files checked).
+- [x] `make test-unit` passes (378 passed, 53 expected failures).
+
+**Additional validation:**
+- Baseline before the fix: `make check` passed, and the existing unit suite had 375 passed and 53 expected failures.
+- All 18 frontend tests pass with Node 20 after `npm ci`.
+- `make test-integration` collects zero tests and exits 5; the existing CI workflow explicitly treats that empty-suite result as success.
+- A real PostgreSQL probe on SQLAlchemy 2.1.8 returned `1`. The original health handler reported PostgreSQL unhealthy with a textual-SQL `ArgumentError`; the fixed handler reports PostgreSQL healthy. Overall status remains 503 because of #62.
+- No pre-existing xfail marker targets #61. The existing health-route mypy suppressions remain necessary for Redis settings/constructor and response dictionary diagnostics; confirmed with an unsuppressed diagnostic run.
+- Verification used a fresh checkout and a replacement Python 3.11 environment with dependencies constrained to the earlier environment's versions, after cloud-offloaded files made the old checkout unreliable. Only the fix, tests, and project journal are committed.
+
+**Draft PR feedback received from:** none.
