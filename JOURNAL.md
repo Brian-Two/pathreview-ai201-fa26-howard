@@ -90,3 +90,33 @@ Added `tests/unit/test_health.py` with three HTTP route tests: all dependencies 
 - Verification used a fresh checkout and a replacement Python 3.11 environment with dependencies constrained to the earlier environment's versions, after cloud-offloaded files made the old checkout unreliable. Only the fix, tests, and project journal are committed.
 
 **Draft PR feedback received from:** none.
+
+## Unit 10 — Iteration & reflection
+
+### Reviewer feedback
+
+**Feedback received:** [ ] Yes  [x] No — still awaiting review
+
+**Summary of feedback:**
+As of November 18, 2026, [PR #99](https://github.com/codepath/pathreview-ai201-fa26-howard/pull/99) is open and ready for review. Its conversation, inline comments, and submitted reviews contain no reviewer feedback. This is the status at this early submission, not a claim that no feedback will arrive before the November 25 deadline.
+
+**How you responded:**
+
+---
+
+### Reflection
+
+**What was harder than you expected?**
+The code change was small, but establishing what the health response actually proved took more work. A direct PostgreSQL `SELECT 1` succeeded while the route marked PostgreSQL unhealthy because SQLAlchemy rejected the raw string before executing it. After wrapping the query in `text()`, the handler still returned HTTP 503 because of the separate Redis settings defect, issue #62. Checking only the HTTP status would have hidden the improvement. I had to distinguish the overall response from each dependency's result. Verification also became an environment problem: cloud-offloaded files stalled imports and even returned empty reads, requiring a fresh checkout and Python environment before the results were trustworthy.
+
+**What did you learn about working in a large codebase?**
+A local change has to fit contracts and conventions that other parts of the project already depend on. For this issue, that meant tracing the route's `get_db()` dependency, keeping the existing response shape and exception behavior, and matching the repository's test and commit conventions. It also meant resisting unrelated changes. The suite's 53 expected failures represent other exercises, and the health module's mypy suppressions still cover real Redis and response-dictionary diagnostics. Removing them indiscriminately would expand the PR without fixing my issue. Contributing to an existing codebase requires explaining the boundary of a fix as carefully as the fix itself.
+
+**How did AI tools help — and where did they fall short?**
+I used an AI coding assistant to inspect the route, develop the plan, generate the implementation and regression tests, run checks, and prepare the PR and journal. The most useful assistance was turning the reported symptom into a testable comparison: the original route versus a SQLAlchemy-compatible query. However, generated code and commands were not evidence by themselves. A permissive `AsyncMock` could accept the invalid raw string, so the session double needed to reject it, and the tests had to fail before the fix. Environment assumptions also needed correction, including the database port and Node version. The live database control, failing-then-passing tests, and CI results were the basis for accepting the work; an AI explanation alone could not establish correctness or replace peer review.
+
+**What would you do differently if you started over?**
+I would verify the development environment and capture the baseline at the start, including Python and Node versions, the Compose database port, and a reproducible dependency list. That would reduce time spent separating setup problems from application defects. I would also complete the issue claim and cohort ledger step when selecting the issue; my Unit 7 entry still records that step as pending. Finally, I would open the draft PR earlier and arrange peer feedback before the submission day. Both Unit 9 check-ins were recorded on November 18, and no peer feedback was received. Spreading the work across the contribution cycle would create more opportunity to revise the tests and explanation in response to another person's questions.
+
+**What are you most proud of from this module?**
+I am most proud of the evidence behind the small fix. The three new route tests cover successful execution, a database failure, and a Redis failure with PostgreSQL still healthy. Two failed on the original implementation and all three passed after the change, while the real database probe confirmed the same diagnosis. The final Unit 9 suite had 378 passing tests with the 53 expected failures unchanged, and all five CI jobs passed. That makes the contribution useful even while the PR remains unreviewed: there is a documented reason for the change and a regression check that can catch the original mistake.
